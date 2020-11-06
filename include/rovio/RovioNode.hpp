@@ -137,6 +137,7 @@ class RovioNode{
   ros::ServiceServer srvResetFilter_;
   ros::ServiceServer srvResetToPoseFilter_;
   ros::Publisher pubOdometry_;
+  ros::Publisher pubImage_[mtState::nCam_];
   ros::Publisher pubTransform_;
   ros::Publisher pubPoseWithCovStamped_;
   ros::Publisher pub_T_J_W_transform;
@@ -227,6 +228,7 @@ class RovioNode{
     pub_T_J_W_transform = nh_.advertise<geometry_msgs::TransformStamped>("rovio/T_G_W", 1);
     for(int camID=0;camID<mtState::nCam_;camID++){
       pubExtrinsics_[camID] = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("rovio/extrinsics" + std::to_string(camID), 1 );
+      pubImage_[camID] = nh_.advertise<sensor_msgs::Image>("rovio/image" + std::to_string(camID), 1);
     }
     pubImuBias_ = nh_.advertise<sensor_msgs::Imu>("rovio/imu_biases", 1 );
 
@@ -498,8 +500,15 @@ class RovioNode{
   void imgCallback(const sensor_msgs::ImageConstPtr & img, const int camID = 0){
     // Get image from msg
     cv_bridge::CvImagePtr cv_ptr;
-    try {
-      cv_ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::TYPE_8UC1);
+      std::string target_encoding;
+      if (img->encoding == sensor_msgs::image_encodings::BGR8) {
+          target_encoding = sensor_msgs::image_encodings::MONO8;
+      }
+      else {
+          target_encoding = sensor_msgs::image_encodings::TYPE_8UC1;
+      }
+      try {
+      cv_ptr = cv_bridge::toCvCopy(img, target_encoding);
     } catch (cv_bridge::Exception& e) {
       ROS_ERROR("cv_bridge exception: %s", e.what());
       return;
@@ -653,14 +662,18 @@ class RovioNode{
       if(mpFilter_->safe_.t_ > oldSafeTime){ // Publish only if something changed
         for(int i=0;i<mtState::nCam_;i++){
           if(!mpFilter_->safe_.img_[i].empty() && mpImgUpdate_->doFrameVisualisation_){
-            cv::imshow("Tracker" + std::to_string(i), mpFilter_->safe_.img_[i]);
-            cv::waitKey(3);
+            std_msgs::Header img_header;
+            img_header.frame_id = camera_frame_ + std::to_string(i);
+            img_header.seq = msgSeq_;
+            img_header.stamp = ros::Time(mpFilter_->safe_.t_);
+            cv_bridge::CvImage outMsg(img_header, "bgr8", mpFilter_->safe_.img_[i]);
+            pubImage_[i].publish(outMsg.toImageMsg());
           }
         }
-        if(!mpFilter_->safe_.patchDrawing_.empty() && mpImgUpdate_->visualizePatches_){
-          cv::imshow("Patches", mpFilter_->safe_.patchDrawing_);
-          cv::waitKey(3);
-        }
+//        if(!mpFilter_->safe_.patchDrawing_.empty() && mpImgUpdate_->visualizePatches_){
+//          cv::imshow("Patches", mpFilter_->safe_.patchDrawing_);
+//          cv::waitKey(3);
+//        }
 
         // Obtain the save filter state.
         mtFilterState& filterState = mpFilter_->safe_;
