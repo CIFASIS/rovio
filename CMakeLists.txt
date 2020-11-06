@@ -12,6 +12,7 @@ add_definitions(-DROVIO_NLEVELS=${ROVIO_NLEVELS})
 add_definitions(-DROVIO_PATCHSIZE=${ROVIO_PATCHSIZE})
 add_definitions(-DROVIO_NPOSE=${ROVIO_NPOSE})
 
+add_subdirectory(kindr)
 add_subdirectory(lightweight_filtering)
 
 ##################### Find, include, and compile library #####################
