@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<launch>
+  <arg name="filter_config" default="$(find rovio)/cfg/rosario_rovio.info" />
+  <arg name="camera0_config" default="$(find rovio)/cfg/rosario_cam0.yaml" />
+  <arg name="camera1_config" default="$(find rovio)/cfg/rosario_cam1.yaml" />
+
+  <node pkg="rovio" type="rovio_node" name="rovio" output="screen">
+  <param name="filter_config" value="$(arg filter_config)"/>
+  <param name="camera0_config" value="$(arg camera0_config)"/>
+  <param name="camera1_config" value="$(arg camera1_config)"/>
+  <param name="world_frame" value="world"/>
+  <remap from="/cam0/image_raw" to="/stereo/left/image_raw" />
+  <remap from="/cam1/image_raw" to="/stereo/right/image_raw" />
+  <remap from="/imu0" to="/imu" />
+  </node>
+</launch>
