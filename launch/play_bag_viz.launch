@@ -1,0 +1,21 @@
+<launch>
+  <arg name="config_rviz"/>
+  <arg name="type" default="O"/>
+  <arg name="topic" default="/rovio/odometry"/>
+  <arg name="bagfile"/>
+  <arg name="save_to_file" default="true"/>
+  <arg name="output_file" default="trajectory.txt"/>
+
+  <node pkg="rviz" type="rviz"
+  	name="rviz_rovio"	clear_params="true" output="log" args="-d $(arg config_rviz)" required="true"/>
+
+  <node pkg="pose_listener" type="pose_listener"
+  	name="pose_listener" clear_params="true" output="log" required="true" if="$(eval save_to_file)">
+    <param name="type" value="$(arg type)"/>
+    <param name="topic" value="$(arg topic)"/>
+    <param name="output_file" value="$(arg output_file)"/>
+  </node>
+
+  <node pkg="rosbag" type="play" name="rovio_rosbag" output="screen" required="true" args="--clock -d 5 $(arg bagfile)"/>
+
+</launch>
