@@ -21,7 +21,7 @@ function echoUsage()
 
 VISUALIZE=true
 RUN_CONTAINER=0
-OUTPUT_FILE=$CURRENT_DIR/outputs/trajectory_$(date '+%Y%m%d_%H%M%S').txt
+OUTPUT_FILE=$CURRENT_DIR/trajectory_$(date '+%Y%m%d_%H%M%S').txt
 while getopts "hrbo:" opt; do
     case "$opt" in
         h)  echoUsage
