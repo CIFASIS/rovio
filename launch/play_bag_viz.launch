@@ -4,10 +4,11 @@
   <arg name="topic" default="/rovio/odometry"/>
   <arg name="bagfile"/>
   <arg name="save_to_file" default="true"/>
+  <arg name="visualize" default="true"/>
   <arg name="output_file" default="trajectory.txt"/>
 
   <node pkg="rviz" type="rviz"
-  	name="rviz_rovio"	clear_params="true" output="log" args="-d $(arg config_rviz)" required="true"/>
+  	name="rviz_rovio"	clear_params="true" output="log" args="-d $(arg config_rviz)" required="true" if="$(eval visualize)"/>
 
   <node pkg="pose_listener" type="pose_listener"
   	name="pose_listener" clear_params="true" output="log" required="true" if="$(eval save_to_file)">

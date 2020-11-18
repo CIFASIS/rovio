@@ -42,7 +42,7 @@ echo "#!/bin/bash" > $OUTPUT_DIR/plot_results.sh
 trap "exit 1" INT
 
 for i in `seq 1 6` ; do
-  $CURRENT_DIR/run_rosario_sequence.sh -r -o $OUTPUT_DIR/trajectory_rosario_0$i.txt $DATASET_DIR/sequence0$i.bag
+  $CURRENT_DIR/run_rosario_sequence.sh -r -b -o $OUTPUT_DIR/trajectory_rosario_0$i.txt $DATASET_DIR/sequence0$i.bag
   echo "evo_traj tum $OUTPUT_DIR/trajectory_rosario_0$i.txt --ref $DATASET_DIR/sequence0${i}_gt.txt --align --plot --t_max_diff 0.02" >> $OUTPUT_DIR/plot_results.sh
 done
 
