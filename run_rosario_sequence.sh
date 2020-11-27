@@ -5,7 +5,9 @@
 
 set -eE # Any subsequent commands which fail will cause the shell script to exit immediately
 OUTPUT_TOPIC="/rovio/odometry"
-CATKIN_WS_DIR=$HOME/catkin_ws/
+if [ -z "${CATKIN_WS_DIR}" ] ; then
+  CATKIN_WS_DIR=$HOME/catkin_ws/
+fi
 
 # Get full directory name of the script no matter where it is being called from
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
