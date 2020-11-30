@@ -79,6 +79,8 @@ function wait_docker() {
     fi
 }
 
+source /opt/ros/$ROS_DISTRO/setup.bash
+
 if [ $RUN_CONTAINER -eq 1 ] ; then
     echo "Starting docker container (detached mode)"
     CID=$($CURRENT_DIR/run.sh -v detached)
