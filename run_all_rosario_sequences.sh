@@ -13,7 +13,7 @@ fi
 
 function echoUsage()
 {
-  echo -e "Usage: ./run_rosario_sequence.sh [-p] ROSBAGS_PATH\n\
+  echo -e "Usage: ./run_all_rosario_sequences.sh [-p] ROSBAGS_PATH\n\
           \t -p \t Plot and show results. Even if the flag is not set, a\n\
           \t\t script to automatically plot the results will be\n\
           \t\t generated with outputs. Evo should be installed. \n\
