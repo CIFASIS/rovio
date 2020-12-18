@@ -184,6 +184,15 @@ class RovioNode{
   std::string camera_frame_;
   std::string imu_frame_;
 
+#ifdef SAVE_TIMES
+  std::chrono::time_point<std::chrono::system_clock> start_time_img_0_;
+  std::chrono::time_point<std::chrono::system_clock> start_time_img_1_;
+  int num_tracked_frames_start_;
+  int num_tracked_frames_end_;
+  std::ofstream f_track_start_times_;
+  std::ofstream f_track_end_times_;
+#endif
+
   /** \brief Constructor
    */
   RovioNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private, std::shared_ptr<mtFilter> mpFilter)
@@ -192,6 +201,18 @@ class RovioNode{
         featureOutputReadableCov_((int)(FeatureOutputReadable::D_),(int)(FeatureOutputReadable::D_)){
     #ifndef NDEBUG
       ROS_WARN("====================== Debug Mode ======================");
+    #endif
+    #ifdef SAVE_TIMES
+      num_tracked_frames_start_ = 0;
+      num_tracked_frames_end_ = 0;
+      start_time_img_0_ = std::chrono::time_point<std::chrono::system_clock>::max();
+      start_time_img_1_ = std::chrono::time_point<std::chrono::system_clock>::max();
+      f_track_start_times_.open("tracking_times_start.txt");
+      f_track_start_times_ << std::fixed;
+      f_track_start_times_ << std::setprecision(6);
+      f_track_end_times_.open("tracking_times_end.txt");
+      f_track_end_times_ << std::fixed;
+      f_track_end_times_ << std::setprecision(6);
     #endif
     mpImgUpdate_ = &std::get<0>(mpFilter_->mUpdates_);
     mpPoseUpdate_ = &std::get<1>(mpFilter_->mUpdates_);
@@ -334,7 +355,12 @@ class RovioNode{
 
   /** \brief Destructor
    */
-  virtual ~RovioNode(){}
+  virtual ~RovioNode(){
+#ifdef SAVE_TIMES
+      f_track_start_times_.close();
+      f_track_end_times_.close();
+#endif
+  }
 
   /** \brief Tests the functionality of the rovio node.
    *
@@ -479,6 +505,9 @@ class RovioNode{
    */
   void imgCallback0(const sensor_msgs::ImageConstPtr & img){
     std::lock_guard<std::mutex> lock(m_filter_);
+#ifdef SAVE_TIMES
+    start_time_img_0_ = std::chrono::system_clock::now();
+#endif
     imgCallback(img,0);
   }
 
@@ -489,7 +518,12 @@ class RovioNode{
    */
   void imgCallback1(const sensor_msgs::ImageConstPtr & img) {
     std::lock_guard<std::mutex> lock(m_filter_);
-    if(mtState::nCam_ > 1) imgCallback(img,1);
+    if(mtState::nCam_ > 1) {
+#ifdef SAVE_TIMES
+        start_time_img_1_ = std::chrono::system_clock::now();
+#endif
+        imgCallback(img,1);
+    }
   }
 
   /** \brief Image callback. Adds images (as update measurements) to the filter.
@@ -529,6 +563,14 @@ class RovioNode{
       imgUpdateMeas_.template get<mtImgMeas::_aux>().isValidPyr_[camID] = true;
 
       if(imgUpdateMeas_.template get<mtImgMeas::_aux>().areAllValid()){
+#ifdef SAVE_TIMES
+        num_tracked_frames_start_++;
+        if(start_time_img_0_ <= start_time_img_1_) {
+            f_track_start_times_ << num_tracked_frames_start_ << " " << start_time_img_0_.time_since_epoch().count() / 1e09 << std::endl;
+        } else {
+            f_track_start_times_ << num_tracked_frames_start_ << " " << start_time_img_1_.time_since_epoch().count() / 1e09 << std::endl;
+        }
+#endif
         mpFilter_->template addUpdateMeas<0>(imgUpdateMeas_,msgTime);
         imgUpdateMeas_.template get<mtImgMeas::_aux>().reset(msgTime);
         updateAndPublish();
@@ -681,6 +723,12 @@ class RovioNode{
         state.updateMultiCameraExtrinsics(&mpFilter_->multiCamera_);
         MXD& cov = mpFilter_->safe_.cov_;
         imuOutputCT_.transformState(state,imuOutput_);
+
+#ifdef SAVE_TIMES
+        num_tracked_frames_end_++;
+        auto const t = std::chrono::system_clock::now().time_since_epoch().count();
+        f_track_end_times_ << num_tracked_frames_end_ << " " << t / 1e09 << std::endl;
+#endif
 
         // Cout verbose for pose measurements
         if(mpImgUpdate_->verbose_){

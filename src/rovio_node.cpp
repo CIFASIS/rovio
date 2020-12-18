@@ -100,6 +100,7 @@ int main(int argc, char** argv){
   mpFilter->readFromInfo(filter_config);
 
   // Force the camera calibration paths to the ones from ROS parameters.
+  std::cout << "CAMERAS: " << nCam_ << std::endl;
   for (unsigned int camID = 0; camID < nCam_; ++camID) {
     std::string camera_config;
     if (nh_private.getParam("camera" + std::to_string(camID)

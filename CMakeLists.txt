@@ -12,6 +12,12 @@ add_definitions(-DROVIO_NLEVELS=${ROVIO_NLEVELS})
 add_definitions(-DROVIO_PATCHSIZE=${ROVIO_PATCHSIZE})
 add_definitions(-DROVIO_NPOSE=${ROVIO_NPOSE})
 
+option(SAVE_TIMES "Enable option to save tracking times" OFF)
+if(SAVE_TIMES)
+	message(STATUS "Building with SAVE_TIMES")
+	add_definitions(-DSAVE_TIMES)
+endif()
+
 add_subdirectory(kindr)
 add_subdirectory(lightweight_filtering)
 
