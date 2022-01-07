@@ -32,6 +32,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <cmath>
 
 #include <cv_bridge/cv_bridge.h>
 #include <geometry_msgs/Pose.h>
@@ -534,15 +535,15 @@ class RovioNode{
   void imgCallback(const sensor_msgs::ImageConstPtr & img, const int camID = 0){
     // Get image from msg
     cv_bridge::CvImagePtr cv_ptr;
-      std::string target_encoding;
-      if (img->encoding == sensor_msgs::image_encodings::BGR8) {
-          target_encoding = sensor_msgs::image_encodings::MONO8;
+      std::string target_encoding;      
+    try {
+      if (img->encoding == sensor_msgs::image_encodings::TYPE_8UC1) {          
+          cv_ptr = cv_bridge::toCvCopy(img);
       }
       else {
-          target_encoding = sensor_msgs::image_encodings::TYPE_8UC1;
-      }
-      try {
-      cv_ptr = cv_bridge::toCvCopy(img, target_encoding);
+          target_encoding = sensor_msgs::image_encodings::MONO8;
+          cv_ptr = cv_bridge::toCvCopy(img, target_encoding);
+      }      
     } catch (cv_bridge::Exception& e) {
       ROS_ERROR("cv_bridge exception: %s", e.what());
       return;
@@ -551,10 +552,11 @@ class RovioNode{
     cv_ptr->image.copyTo(cv_img);
     if(init_state_.isInitialized() && !cv_img.empty()){
       double msgTime = img->header.stamp.toSec();
-      if(msgTime != imgUpdateMeas_.template get<mtImgMeas::_aux>().imgTime_){
+      //if(msgTime != imgUpdateMeas_.template get<mtImgMeas::_aux>().imgTime_){
+      if(std::abs(msgTime - imgUpdateMeas_.template get<mtImgMeas::_aux>().imgTime_) > 0.01){
         for(int i=0;i<mtState::nCam_;i++){
           if(imgUpdateMeas_.template get<mtImgMeas::_aux>().isValidPyr_[i]){
-            std::cout << "    \033[31mFailed Synchronization of Camera Frames, t = " << msgTime << "\033[0m" << std::endl;
+            std::cout << "    \033[31mFailed Synchronization of Camera Frames, t1 = " << msgTime << " vs t2 = " << imgUpdateMeas_.template get<mtImgMeas::_aux>().imgTime_ << "\033[0m" << std::endl;
           }
         }
         imgUpdateMeas_.template get<mtImgMeas::_aux>().reset(msgTime);
@@ -754,7 +756,7 @@ class RovioNode{
           tf_transform_WI.stamp_ = ros::Time(mpFilter_->safe_.t_);
           tf_transform_WI.setOrigin(tf::Vector3(IrIW(0),IrIW(1),IrIW(2)));
           tf_transform_WI.setRotation(tf::Quaternion(qWI.x(),qWI.y(),qWI.z(),-qWI.w()));
-          tb_.sendTransform(tf_transform_WI);
+          //tb_.sendTransform(tf_transform_WI);
         }
 
         // Send IMU pose.
@@ -764,7 +766,7 @@ class RovioNode{
         tf_transform_MW.stamp_ = ros::Time(mpFilter_->safe_.t_);
         tf_transform_MW.setOrigin(tf::Vector3(imuOutput_.WrWB()(0),imuOutput_.WrWB()(1),imuOutput_.WrWB()(2)));
         tf_transform_MW.setRotation(tf::Quaternion(imuOutput_.qBW().x(),imuOutput_.qBW().y(),imuOutput_.qBW().z(),-imuOutput_.qBW().w()));
-        tb_.sendTransform(tf_transform_MW);
+        //tb_.sendTransform(tf_transform_MW);
 
         // Send camera pose.
         for(int camID=0;camID<mtState::nCam_;camID++){
@@ -774,7 +776,7 @@ class RovioNode{
           tf_transform_CM.stamp_ = ros::Time(mpFilter_->safe_.t_);
           tf_transform_CM.setOrigin(tf::Vector3(state.MrMC(camID)(0),state.MrMC(camID)(1),state.MrMC(camID)(2)));
           tf_transform_CM.setRotation(tf::Quaternion(state.qCM(camID).x(),state.qCM(camID).y(),state.qCM(camID).z(),-state.qCM(camID).w()));
-          tb_.sendTransform(tf_transform_CM);
+          //tb_.sendTransform(tf_transform_CM);
         }
 
         // Publish Odometry

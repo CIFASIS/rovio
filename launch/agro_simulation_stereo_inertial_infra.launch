@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<launch>
+  <arg name="filter_config" default="$(find rovio)/cfg/agro_simulation_stereo_inertial_infra.info" />
+  <arg name="camera0_config" default="$(find rovio)/cfg/agro_simulation_infra_cam0.yaml" />
+  <arg name="camera1_config" default="$(find rovio)/cfg/agro_simulation_infra_cam1.yaml" />
+
+  <node pkg="rovio" type="rovio_node" name="rovio" output="screen">
+  <param name="filter_config" value="$(arg filter_config)"/>
+  <param name="camera0_config" value="$(arg camera0_config)"/>
+  <param name="camera1_config" value="$(arg camera1_config)"/>
+  <param name="world_frame" value="world"/>
+  <remap from="/cam0/image_raw" to="/camera/infra1/image_rect_raw" />
+  <remap from="/cam1/image_raw" to="/camera/infra2/image_rect_raw" />
+  <remap from="/imu0" to="/camera/imu/sample" />
+  </node>
+</launch>
