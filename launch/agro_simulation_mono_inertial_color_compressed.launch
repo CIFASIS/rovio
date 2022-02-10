@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="filter_config" default="$(find rovio)/cfg/agro_simulation_mono_inertial_color.info" /> 
+  <arg name="camera0_config" default="$(find rovio)/cfg/agro_simulation_color_cam0.yaml" />
+
+
+  <node name="republish" type="republish" pkg="image_transport" output="screen" args="compressed in:=/camera/color/image_raw raw out:=/cam0/image_raw" /> 
+
+  <node pkg="rovio" type="rovio_node" name="rovio" output="screen">
+  <param name="filter_config" value="$(arg filter_config)"/>
+  <param name="camera0_config" value="$(arg camera0_config)"/>
+  <param name="world_frame" value="world"/>
+  <!-- <remap from="/cam0/image_raw" to="/camera/color/image_raw" /> --> 
+  <remap from="/imu0" to="/camera/imu/sample" />
+  </node>
+</launch>
+
+
+
